@@ -74,17 +74,19 @@
    def xroad_python_tests = python_tests_subfolder
    def python_path = temp_ws + &quot;/&quot; + xroad_python_tests
    def test_order_profile = test_repository_subfolder + test_order_file
-   def testProfile = readFile(test_order_profile).readLines()
    if (&quot;${FIRST_RUN}&quot; == &quot;True&quot;) {
        stage(&quot;Checkout and init&quot;) {
            sh &quot;&quot;&quot;
-            find ${test_repository_subfolder} -name &apos;*-junit.xml&apos; -exec rm -r {} \\;
+            find ${test_repository_subfolder} -name &apos;*-junit.xml&apos; -exec rm -r {} \\; || true
             rm -f ${test_repository_subfolder}/temp/*.png
             rm -f ${test_repository_subfolder}/temp/*.txt
            &quot;&quot;&quot;
            checkout([$class: &apos;GitSCM&apos;, branches: [[name: &quot;${test_environment_branch}&quot;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;RelativeTargetDirectory&apos;, relativeTargetDir: &quot;${test_environment_subfolder}&quot;]], gitTool: &apos;Default&apos;, submoduleCfg: [], userRemoteConfigs: [[url: &quot;${test_environment_repository}&quot;]]])
            checkout([$class: &apos;GitSCM&apos;, branches: [[name: &quot;${test_branch}&quot;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;RelativeTargetDirectory&apos;, relativeTargetDir: &quot;${test_repository_subfolder}&quot;]], gitTool: &apos;Default&apos;, submoduleCfg: [], userRemoteConfigs: [[url: &quot;${test_repository}&quot;]]])
        }
+   }
+   def testProfile = readFile(test_order_profile).readLines()
+   if (&quot;${FIRST_RUN}&quot; == &quot;True&quot;) {
        println(&quot;[T] Test list file: ${test_order_profile}&quot;)
        println(testProfile.join(&quot;\n&quot;))
        println(&quot;[T] Total lines: &quot; + testProfile.size())
@@ -151,8 +153,8 @@
    if (&quot;${JUNIT_RESULTS}&quot; == &quot;True&quot;) {
        stage(&quot;junit results&quot;) {
            sh &quot;&quot;&quot;
-            mv ${python_tests_subfolder}/temp/*-junit.xml ${current_workspace}/
-            touch ${current_workspace}/*-junit.xml
+            mv ${python_tests_subfolder}/temp/*-junit.xml ${current_workspace}/ || true
+            touch ${current_workspace}/*-junit.xml || true
            &quot;&quot;&quot;
            archiveArtifacts artifacts: &quot;${python_tests_subfolder}/temp/*.png, ${python_tests_subfolder}/temp/*.txt, ${python_tests_subfolder}/main/config_lxd.ini&quot;, allowEmptyArchive: true
            junit &quot;*-junit.xml&quot;
