@@ -28,6 +28,30 @@
           </choices>
         </hudson.model.ChoiceParameterDefinition>
         <hudson.model.StringParameterDefinition>
+          <name>CUSTOM_TEST_REPOSITORY</name>
+          <description>X-Road-tests git repository</description>
+          <defaultValue>https://github.com/ria-ee/X-Road-tests</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CUSTOM_TEST_BRANCH</name>
+          <description>X-Road-tests git branch</description>
+          <defaultValue>develop</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_ENVIRONMENT_REPOSITORY</name>
+          <description>X-Road test environment git repository</description>
+          <defaultValue>https://github.com/vrk-kpa/X-Road-tests-environment</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_ENVIRONMENT_BRANCH</name>
+          <description>X-Road test environment git branch</description>
+          <defaultValue>master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
           <name>RUN_TESTS</name>
           <description>Comma-separated list of tests to run, default &quot;ALL&quot; (all tests), &quot;SKIP&quot; to skip this step.</description>
           <defaultValue>ALL</defaultValue>
@@ -50,18 +74,15 @@
     <script>node {
    cleanWs()
    // Test environment
-   def test_environment_repository = &quot;https://github.com/asaquality/X-Road-tests-environment&quot;
-   def test_environment_branch = &quot;master&quot;
+   def test_environment_repository = &quot;${TEST_ENVIRONMENT_REPOSITORY}&quot;
+   def test_environment_branch = &quot;${TEST_ENVIRONMENT_BRANCH}&quot;
    def test_environment_subfolder = &quot;/home/jenkins/tests/&quot;
    // Tests
-   //def test_repository = &quot;https://github.com/asaquality/X-Road-tests&quot;
-   def test_repository = &quot;https://bitbucket.org/marttibar/x-road-tests.git&quot;
-   def test_branch = &quot;develop&quot;
+   def test_repository = &quot;${CUSTOM_TEST_REPOSITORY}&quot;
+   def test_branch = &quot;${CUSTOM_TEST_BRANCH}&quot;
    def test_repository_subfolder = &quot;/home/jenkins/tests/python-tests&quot;
-   //def test_subfolder = &quot;/common/xrd-ui-tests-python&quot;
-   //def test_order_file = &quot;/common/xrd-ui-tests-python/jenkins/xroad_est_tests_profile.txt&quot;
-   def test_subfolder = &quot;/&quot;
-   def test_order_file = &quot;/jenkins/xroad_est_tests_profile.txt&quot;
+   def test_subfolder = &quot;/common/xrd-ui-tests-python&quot;
+   def test_order_file = &quot;/common/xrd-ui-tests-python/jenkins/xroad_est_tests_profile.txt&quot;
 
    def current_workspace = &quot;$WORKSPACE&quot;
 
