@@ -67,6 +67,12 @@
             </a>
           </choices>
         </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_PROFILE</name>
+          <description>File that contains the list and order of tests.</description>
+          <defaultValue>xroad_est_tests_profile.txt</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
       </parameterDefinitions>
     </hudson.model.ParametersDefinitionProperty>
   </properties>
@@ -82,7 +88,7 @@
    def test_branch = &quot;${CUSTOM_TEST_BRANCH}&quot;
    def test_repository_subfolder = &quot;/home/jenkins/tests/python-tests&quot;
    def test_subfolder = &quot;/common/xrd-ui-tests-python&quot;
-   def test_order_file = &quot;/common/xrd-ui-tests-python/jenkins/xroad_est_tests_profile.txt&quot;
+   def test_order_file = &quot;/common/xrd-ui-tests-python/jenkins/$TEST_PROFILE&quot;
 
    def current_workspace = &quot;$WORKSPACE&quot;
 
