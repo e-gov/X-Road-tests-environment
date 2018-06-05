@@ -59,14 +59,14 @@ lxc file push $WORKSPACE/server-config/xroad-autologin xroad-lxd-cs/etc/xroad/au
 lxc file push $WORKSPACE/server-config/xroad-autologin xroad-lxd-ss0/etc/xroad/autologin
 lxc file push $WORKSPACE/server-config/xroad-autologin xroad-lxd-ss1/etc/xroad/autologin
 lxc file push $WORKSPACE/server-config/xroad-autologin xroad-lxd-ss2/etc/xroad/autologin
-#lxc exec xroad-lxd-cs -- sudo chown xroad:xroad /etc/xroad/autologin
-#lxc exec xroad-lxd-cs -- sudo apt-get -y install xroad-autologin
-#lxc exec xroad-lxd-ss0 -- sudo chown xroad:xroad /etc/xroad/autologin
-#lxc exec xroad-lxd-ss0 -- sudo apt-get -y install xroad-autologin
-#lxc exec xroad-lxd-ss1 -- sudo chown xroad:xroad /etc/xroad/autologin
-#lxc exec xroad-lxd-ss1 -- sudo apt-get -y install xroad-autologin
-#lxc exec xroad-lxd-ss2 -- sudo chown xroad:xroad /etc/xroad/autologin
-#lxc exec xroad-lxd-ss2 -- sudo apt-get -y install xroad-autologin
+lxc exec xroad-lxd-cs -- sudo chown xroad:xroad /etc/xroad/autologin || true
+lxc exec xroad-lxd-cs -- sudo apt-get -y install xroad-autologin || true
+lxc exec xroad-lxd-ss0 -- sudo chown xroad:xroad /etc/xroad/autologin || true
+lxc exec xroad-lxd-ss0 -- sudo apt-get -y install xroad-autologin || true
+lxc exec xroad-lxd-ss1 -- sudo chown xroad:xroad /etc/xroad/autologin || true
+lxc exec xroad-lxd-ss1 -- sudo apt-get -y install xroad-autologin || true
+lxc exec xroad-lxd-ss2 -- sudo chown xroad:xroad /etc/xroad/autologin || true
+lxc exec xroad-lxd-ss2 -- sudo apt-get -y install xroad-autologin || true
 
 
 sudo mkdir /home/jenkins/certs || true
