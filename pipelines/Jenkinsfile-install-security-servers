@@ -127,7 +127,7 @@ env
 cd $test_project_dir
 ls -la
 echo $test_project_dir
-bash -l -c "qautorunner.py $execution_command -p $test_data_path -t 33 -b ff -s -v ogg -a $WORKSPACE/$test_project_dir/test_reports/error_logs.txt"
+bash -l -c "qautorunner.py $execution_command -p $test_data_path -t 63 -b ff -s -v ogg -a $WORKSPACE/$test_project_dir/test_reports/error_logs.txt"
 cd $WORKSPACE
  """
             }
