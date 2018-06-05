@@ -4,6 +4,8 @@ xroad-lxd-cs ansible_connection=lxd
 xroad-lxd-ss0 ansible_connection=lxd
 xroad-lxd-ss1 ansible_connection=lxd
 xroad-lxd-ss2 ansible_connection=lxd
+# Webserver needs to be an xroad-server for CP functions
+xroad-lxd-web ansible_connection=lxd
 
 # Configure X-Road repository
 [xroad-servers:vars]
@@ -38,6 +40,10 @@ localhost ansible_connection=local
 
 [compile-servers]
 localhost ansible_connection=local
+
+# Set webserver as a temporary CP server
+[cp-servers]
+xroad-lxd-web ansible_connection=lxd
 
 [global]
 xroad-lxd-cs ansible_connection=lxd

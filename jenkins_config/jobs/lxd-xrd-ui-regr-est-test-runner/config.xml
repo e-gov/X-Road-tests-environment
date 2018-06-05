@@ -1,5 +1,5 @@
 <?xml version='1.0' encoding='UTF-8'?>
-<flow-definition plugin="workflow-job@2.17">
+<flow-definition plugin="workflow-job@2.21">
   <actions/>
   <description></description>
   <keepDependencies>false</keepDependencies>
@@ -10,28 +10,187 @@
       <scanQueueFor>DISABLED</scanQueueFor>
       <blockingJobs></blockingJobs>
     </hudson.plugins.buildblocker.BuildBlockerProperty>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableConcurrentBuildsJobProperty/>
+    <org.jenkinsci.plugins.workflow.job.properties.DisableResumeJobProperty/>
+    <org.jenkinsci.plugins.workflow.job.properties.DurabilityHintJobProperty>
+      <hint>MAX_SURVIVABILITY</hint>
+    </org.jenkinsci.plugins.workflow.job.properties.DurabilityHintJobProperty>
+    <hudson.model.ParametersDefinitionProperty>
+      <parameterDefinitions>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>FIRST_RUN</name>
+          <description>SCM checkout of repositories, clear temp and remove old junit results</description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>True</string>
+              <string>False</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CUSTOM_TEST_REPOSITORY</name>
+          <description>X-Road-tests git repository</description>
+          <defaultValue>https://github.com/ria-ee/X-Road-tests</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>CUSTOM_TEST_BRANCH</name>
+          <description>X-Road-tests git branch</description>
+          <defaultValue>develop</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_ENVIRONMENT_REPOSITORY</name>
+          <description>X-Road test environment git repository</description>
+          <defaultValue>https://github.com/vrk-kpa/X-Road-tests-environment</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_ENVIRONMENT_BRANCH</name>
+          <description>X-Road test environment git branch</description>
+          <defaultValue>master</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>RUN_TESTS</name>
+          <description>Comma-separated list of tests to run, default &quot;ALL&quot; (all tests), &quot;SKIP&quot; to skip this step.</description>
+          <defaultValue>ALL</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+        <hudson.model.ChoiceParameterDefinition>
+          <name>JUNIT_RESULTS</name>
+          <description></description>
+          <choices class="java.util.Arrays$ArrayList">
+            <a class="string-array">
+              <string>True</string>
+              <string>False</string>
+            </a>
+          </choices>
+        </hudson.model.ChoiceParameterDefinition>
+        <hudson.model.StringParameterDefinition>
+          <name>TEST_PROFILE</name>
+          <description>File that contains the list and order of tests.</description>
+          <defaultValue>xroad_est_tests_profile.txt</defaultValue>
+          <trim>true</trim>
+        </hudson.model.StringParameterDefinition>
+      </parameterDefinitions>
+    </hudson.model.ParametersDefinitionProperty>
   </properties>
-  <definition class="org.jenkinsci.plugins.workflow.cps.CpsScmFlowDefinition" plugin="workflow-cps@2.45">
-    <scm class="hudson.plugins.git.GitSCM" plugin="git@3.8.0">
-      <configVersion>2</configVersion>
-      <userRemoteConfigs>
-        <hudson.plugins.git.UserRemoteConfig>
-          <url>https://github.com/vrk-kpa/X-Road-tests-environment</url>
-          <credentialsId>b7a9b945-4430-4598-8d5d-ad6ed0941c5f</credentialsId>
-        </hudson.plugins.git.UserRemoteConfig>
-      </userRemoteConfigs>
-      <branches>
-        <hudson.plugins.git.BranchSpec>
-          <name>*/master</name>
-        </hudson.plugins.git.BranchSpec>
-      </branches>
-      <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
-      <submoduleCfg class="list"/>
-      <extensions/>
-    </scm>
-    <scriptPath>pipelines/Jenkinsfile-xrd-est-ui-regr-test-runner</scriptPath>
-    <lightweight>true</lightweight>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps@2.53">
+    <script>node {
+   cleanWs()
+   // Test environment
+   def test_environment_repository = &quot;${TEST_ENVIRONMENT_REPOSITORY}&quot;
+   def test_environment_branch = &quot;${TEST_ENVIRONMENT_BRANCH}&quot;
+   def test_environment_subfolder = &quot;/home/jenkins/tests/&quot;
+   // Tests
+   def test_repository = &quot;${CUSTOM_TEST_REPOSITORY}&quot;
+   def test_branch = &quot;${CUSTOM_TEST_BRANCH}&quot;
+   def test_repository_subfolder = &quot;/home/jenkins/tests/python-tests&quot;
+   def test_subfolder = &quot;/common/xrd-ui-tests-python&quot;
+   def test_order_file = &quot;/common/xrd-ui-tests-python/jenkins/$TEST_PROFILE&quot;
+
+   def current_workspace = &quot;$WORKSPACE&quot;
+
+   def geckodriver_path = &quot;/home/jenkins/.local/lib/python2.7/site-packages/qautomate/webdrivers/geckodriver_linux64&quot;
+   def ignore_errors = &quot;false&quot;
+
+   def python_tests_subfolder = test_repository_subfolder+test_subfolder
+
+   def temp_ws = &quot;&quot;
+   def xroad_python_tests = python_tests_subfolder
+   def python_path = temp_ws + &quot;/&quot; + xroad_python_tests
+   def test_order_profile = test_repository_subfolder + test_order_file
+   if (&quot;${FIRST_RUN}&quot; == &quot;True&quot;) {
+       stage(&quot;Checkout and init&quot;) {
+           sh &quot;&quot;&quot;
+            find ${test_repository_subfolder} -name &apos;*-junit.xml&apos; -exec rm -r {} \\; || true
+            rm -f ${test_repository_subfolder}/temp/*.png
+            rm -f ${test_repository_subfolder}/temp/*.txt
+           &quot;&quot;&quot;
+           checkout([$class: &apos;GitSCM&apos;, branches: [[name: &quot;${test_environment_branch}&quot;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;RelativeTargetDirectory&apos;, relativeTargetDir: &quot;${test_environment_subfolder}&quot;]], gitTool: &apos;Default&apos;, submoduleCfg: [], userRemoteConfigs: [[url: &quot;${test_environment_repository}&quot;]]])
+           checkout([$class: &apos;GitSCM&apos;, branches: [[name: &quot;${test_branch}&quot;]], doGenerateSubmoduleConfigurations: false, extensions: [[$class: &apos;RelativeTargetDirectory&apos;, relativeTargetDir: &quot;${test_repository_subfolder}&quot;]], gitTool: &apos;Default&apos;, submoduleCfg: [], userRemoteConfigs: [[url: &quot;${test_repository}&quot;]]])
+       }
+   }
+   def testProfile = readFile(test_order_profile).readLines()
+   if (&quot;${FIRST_RUN}&quot; == &quot;True&quot;) {
+       println(&quot;[T] Test list file: ${test_order_profile}&quot;)
+       println(testProfile.join(&quot;\n&quot;))
+       println(&quot;[T] Total lines: &quot; + testProfile.size())
+   }
+   def execTestClass = &quot;&quot;
+   def execTestFolder = &quot;&quot;
+   def execCount = []
+   //def temp_ws = pwd()
+
+   def run_tests_param = &quot;${RUN_TESTS}&quot;.tokenize(&apos;,&apos;)
+   def run_tests = []
+   for (int i = 0; i &lt; run_tests_param.size(); i++) {
+       def run_test = run_tests_param[i].trim()
+       if (run_test != &quot;&quot; &amp;&amp; run_test != &quot;ALL&quot;) {
+           run_tests.add(run_test)
+       }
+   }
+
+   if (&quot;${RUN_TESTS}&quot; != &quot;SKIP&quot;) {
+       def counter = 0
+       for (int i = 0; i &lt; testProfile.size(); i++) {
+           def line = testProfile[i].trim()
+           if (line == &quot;&quot; || line[0] == &quot;#&quot; || line[0] == &quot;[&quot;) {
+               // Skip these lines
+               continue
+           }
+           // We&apos;re here, so we&apos;re running the test
+           counter++
+           tokens = line.tokenize(&apos;=&apos;)
+           def delay = 1
+           def testName = tokens[0]
+           if (tokens.size() == 2) {
+               delay = tokens[1]
+           }
+           def testTokens = testName.tokenize(&apos;.&apos;)
+           execTestFolder = testTokens[0]
+           execTestClass = testTokens[1]
+
+           // If run_tests is empty, then we need to run all of them
+           if (run_tests.size() &gt; 0) {
+               // Otherwise we&apos;ll only run the tests that were supplied inparams
+               if (!run_tests.contains(testName) &amp;&amp; !run_tests.contains(execTestClass)) {
+                   continue
+               }
+           }
+
+           stage(execTestClass) {
+               println(&quot;Test &quot;+counter +&quot;: &quot; + execTestFolder + &quot;.&quot; + execTestClass + &quot;, delay after: &quot; + delay )
+
+               sh &quot;&quot;&quot;
+                   export DISPLAY=:0
+                   export PYTHONPATH=$temp_ws/$xroad_python_tests
+                   export PYTHONUNBUFFERED=1
+                   export PATH=$PATH:$geckodriver_path
+                   cd ${python_path}/tests/${execTestFolder}
+                   nose2 --plugin nose2.plugins.junitxml --junit-xml ${execTestClass} || ${ignore_errors}
+                   mv nose2-junit.xml ${python_tests_subfolder}/temp/${execTestClass}-junit.xml
+                &quot;&quot;&quot;
+
+                sleep(delay.toInteger())
+           }
+       }
+   }
+   if (&quot;${JUNIT_RESULTS}&quot; == &quot;True&quot;) {
+       stage(&quot;junit results&quot;) {
+           sh &quot;&quot;&quot;
+            mv ${python_tests_subfolder}/temp/*-junit.xml ${current_workspace}/ || true
+            touch ${current_workspace}/*-junit.xml || true
+           &quot;&quot;&quot;
+           archiveArtifacts artifacts: &quot;${python_tests_subfolder}/temp/*.png, ${python_tests_subfolder}/temp/*.txt, ${python_tests_subfolder}/main/config_lxd.ini&quot;, allowEmptyArchive: true
+           junit &quot;*-junit.xml&quot;
+       }
+   }
+}</script>
+    <sandbox>true</sandbox>
   </definition>
   <triggers/>
+  <authToken>xroad</authToken>
   <disabled>false</disabled>
 </flow-definition>
